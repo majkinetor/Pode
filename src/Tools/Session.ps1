@@ -67,7 +67,8 @@ function New-PodeSession
         Add-Member -MemberType NoteProperty -Name Lockable -Value $null -PassThru |
         Add-Member -MemberType NoteProperty -Name Access -Value @{} -PassThru |
         Add-Member -MemberType NoteProperty -Name Limits -Value @{} -PassThru |
-        Add-Member -MemberType NoteProperty -Name FileMonitor -Value $FileMonitor -PassThru
+        Add-Member -MemberType NoteProperty -Name FileMonitor -Value $FileMonitor -PassThru |
+        Add-Member -MemberType NoteProperty -Name Gui -Value @{} -PassThru
 
     # set the IP address details
     $session.IP = @{
@@ -118,6 +119,12 @@ function New-PodeSession
         'Active' = @{};
     }
 
+    # setup gui details
+    $session.Gui = @{
+        'Enabled' = $false;
+        'Name' = $null;
+    }
+
     # create new cancellation tokens
     $session.Tokens = @{
         'Cancellation' = New-Object System.Threading.CancellationTokenSource;
@@ -158,11 +165,13 @@ function New-PodeSession
         'Timer' = 1;
         'Log' = 1;
         'Schedule' = 1;
+        'Gui' = 1;
         'Misc' = 1;
     }
 
     $totalThreadCount = ($threadsCounts.Values | Measure-Object -Sum).Sum + $Threads
     $session.RunspacePools.Main = [runspacefactory]::CreateRunspacePool(1, $totalThreadCount, $state, $Host)
+    $session.RunspacePools.Main.ApartmentState = 'STA'
     $session.RunspacePools.Main.Open()
 
     # setup schedule runspace pool
@@ -199,7 +208,8 @@ function New-PodeStateSession
         Add-Member -MemberType NoteProperty -Name SharedState -Value $Session.SharedState -PassThru |
         Add-Member -MemberType NoteProperty -Name Lockable -Value $Session.Lockable -PassThru |
         Add-Member -MemberType NoteProperty -Name Access -Value $Session.Access -PassThru |
-        Add-Member -MemberType NoteProperty -Name Limits -Value $Session.Limits -PassThru)
+        Add-Member -MemberType NoteProperty -Name Limits -Value $Session.Limits -PassThru |
+        Add-Member -MemberType NoteProperty -Name Gui -Value $Session.Gui -PassThru)
 }
 
 function State

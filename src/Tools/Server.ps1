@@ -47,11 +47,19 @@ function Server
         $DisableLogging,
 
         [switch]
-        $FileMonitor
+        $FileMonitor,
+
+        [switch]
+        $Force
     )
 
     # ensure the session is clean
     $PodeSession = $null
+
+    # ensure we're running as an admin
+    if (!$Force -and !(Test-AdminUser)) {
+        throw 'Must be running with administrator priviledges to use Pode'
+    }
 
     # validate port passed
     if ($Port -lt 0) {
@@ -95,9 +103,9 @@ function Server
         # start the server
         Start-PodeServer
 
-        # sit here waiting for termination (unless it's one-off script)
+        # sit here waiting for termination or cancellation (unless it's one-off script)
         if ($PodeSession.ServerType -ine 'script') {
-            while (!(Test-TerminationPressed)) {
+            while (!(Test-TerminationPressed) -and !($PodeSession.Tokens.Cancellation.IsCancellationRequested)) {
                 Start-Sleep -Seconds 1
 
                 # check for internal restart
@@ -131,6 +139,9 @@ function Start-PodeServer
 
         # start runspace for schedules
         Start-ScheduleRunspace
+
+        # start runspace for gui
+        Start-GuiRunspace
 
         # start the appropriate server
         switch ($PodeSession.ServerType.ToUpperInvariant())

@@ -95,6 +95,29 @@ function Test-IsPSCore
     return (Get-PSVersionTable).PSEdition -ieq 'core'
 }
 
+function Test-AdminUser
+{
+    # check the current platform, if it's unix then return true
+    if (Test-IsUnix) {
+        return $true
+    }
+
+    try {
+        $principal = New-Object System.Security.Principal.WindowsPrincipal([System.Security.Principal.WindowsIdentity]::GetCurrent())
+
+        if ($principal -eq $null) {
+            return $false
+        }
+
+        return $principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)
+    }
+    catch [exception] {
+        Write-Host 'Error checking user administrator priviledges' -ForegroundColor Red
+        Write-Host $_.Exception.Message -ForegroundColor Red
+        return $false
+    }
+}
+
 function New-PodeSelfSignedCertificate
 {
     param (
@@ -446,7 +469,6 @@ function Test-TerminationPressed
 
     return $false
 }
-
 
 function Start-TerminationListener
 {
